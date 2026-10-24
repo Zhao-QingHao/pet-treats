@@ -70,6 +70,7 @@ function renderProducts() {
     <div class="product-info"><div class="product-meta"><span class="pet-label">${icon(p.pet)}${p.pet === 'cat' ? '猫咪零食' : '狗狗零食'}</span><span>${p.weight}</span></div>
     <h3><button class="product-name" data-detail="${p.id}">${p.name}</button></h3><p class="product-subtitle">${p.subtitle}</p>
     <div class="product-rating">${icon('heart')} 小爪推荐 <span>· ${p.flavor}风味</span></div>
+    <p class="product-sales" title="示例月销量，非真实交易数据">月销 ${p.monthlySales.toLocaleString('zh-CN')} 件</p>
     <div class="product-bottom">${price(p.price, p.original)}<button class="quick-add" data-add="${p.id}" aria-label="添加${p.name}到购物车">${icon('plus')}</button></div></div>
   </article>`).join('');
   $('#result-count').textContent = selected.length ? `为你精选 ${selected.length} 款美味` : '找到 0 款美味';
@@ -80,6 +81,9 @@ function updateCartBadge() {
   $('#cart-count').textContent = cart.count;
   $('#cart-title-count').textContent = `${cart.count} 件`;
   $('#open-cart').setAttribute('aria-label', `打开购物车，${cart.count} 件商品`);
+  $('#live-cart-count').textContent = `购物袋 · ${cart.count} 件`;
+  $('#live-cart-total').textContent = cart.count ? `合计 ¥${money(cart.total)}` : '还没挑选？给它一点小奖励';
+  $('#open-live-cart').setAttribute('aria-label', `查看购物袋，${cart.count} 件，合计 ${money(cart.total)} 元`);
 }
 function addProduct(id, quantity = 1) {
   const p = products.find(p => p.id === id);
@@ -149,7 +153,9 @@ function renderCart() {
   $('#cart-items').innerHTML = items.length ? items.map(({ product: p, quantity }) => `<article class="cart-item" data-cart-id="${p.id}"><img class="cart-item-image" style="--card-bg:${p.background}" src="${p.image}" alt="${p.name}" width="80" height="103"><div><div class="cart-item-title"><h3>${p.name}</h3><button class="remove-item" data-remove="${p.id}" aria-label="移除${p.name}">移除</button></div><p>${p.weight} · ${p.pet === 'cat' ? '猫咪零食' : '狗狗零食'}</p><div class="cart-item-bottom">${price(p.price)}${quantityControl(quantity, 'cart-qty')}</div><p>小计 ¥${money(p.price * quantity)}</p></div></article>`).join('') : `<div class="cart-empty">${icon('bag')}<h3>快乐购物袋还是空的</h3><p>给毛孩子挑一点心动的小零食吧。</p><button class="button primary" id="continue-shopping">去发现小美味${icon('arrow')}</button></div>`;
   $('#cart-footer').innerHTML = `<div class="cart-subtotal"><span>商品合计（${cart.count} 件）</span>${price(cart.total)}</div><p>每一份小奖励，都装着你的大大宠爱。</p><button id="checkout-button" class="button primary" ${!items.length ? 'disabled' : ''}>模拟结算${icon('arrow')}</button><p class="cart-demo">仅供前端演示，不收取任何费用</p>`;
 }
-$('#open-cart').addEventListener('click', () => { renderCart(); openDialog(cartDialog); });
+for (const button of [$('#open-cart'), $('#open-live-cart')]) {
+  button.addEventListener('click', () => { renderCart(); openDialog(cartDialog); });
+}
 cartDialog.addEventListener('click', event => {
   if (event.target.closest('#continue-shopping')) {
     closeDialog(cartDialog);

@@ -31,7 +31,6 @@
     <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 20V4m-6 6 6-6 6 6"/></symbol>
   </svg>
   <a class="skip-link" href="#shop">跳至商品区</a>
-  <div class="announcement"><span>好好吃零食，好好被爱</span><span class="announcement-divider">✦</span><span>小爪尝鲜价 ¥24.90 起</span></div>
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="#home" aria-label="爪爪零食铺首页"><span class="brand-mark"><svg class="icon"><use href="#i-paw"/></svg></span><span>爪爪零食铺<small>PAW PAW PANTRY</small></span></a>
@@ -84,6 +83,11 @@
     <section class="closing-banner"><div class="container closing-inner"><div><span class="eyebrow">HAPPY PAWS, HAPPY DAYS.</span><h2>今天，也要好好宠爱它。</h2><p>一点好吃的，一点小陪伴，就是它的全世界。</p></div><a href="#shop" class="button primary">带一份快乐回家<svg class="icon"><use href="#i-arrow"/></svg></a><svg class="closing-paw icon" aria-hidden="true"><use href="#i-paw"/></svg></div></section>
   </main>
   <footer class="site-footer container"><div class="footer-top"><a class="brand" href="#home"><span class="brand-mark"><svg class="icon"><use href="#i-paw"/></svg></span><span>爪爪零食铺<small>PAW PAW PANTRY</small></span></a><span class="footer-tagline">把爱，喂进每一口。</span><a href="#home" class="back-top">回到顶部 <svg class="icon"><use href="#i-up"/></svg></a></div><div class="footer-bottom"><span>© 2026 爪爪零食铺 · Made with love & little paws.</span><span>前端演示网站 · 商品与价格仅作展示，不产生真实交易</span></div></footer>
+  <aside class="live-cart" aria-label="实时购物车">
+    <span class="live-cart-icon"><svg class="icon" aria-hidden="true"><use href="#i-bag"/></svg></span>
+    <div class="live-cart-copy" role="status" aria-live="polite" aria-atomic="true"><strong id="live-cart-count">购物袋 · 0 件</strong><span id="live-cart-total">还没挑选？给它一点小奖励</span></div>
+    <button class="button primary" id="open-live-cart" aria-haspopup="dialog" aria-controls="cart-dialog">查看购物袋<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+  </aside>
   <dialog id="detail-dialog" class="detail-dialog" aria-labelledby="detail-title"><button class="icon-button dialog-close" data-close aria-label="关闭商品详情"><svg class="icon"><use href="#i-close"/></svg></button><div id="detail-content"></div></dialog>
   <dialog id="cart-dialog" class="cart-dialog" aria-labelledby="cart-title"><div class="cart-header"><div><span class="eyebrow">A BAG OF HAPPINESS</span><h2 id="cart-title">它的快乐购物袋 <span id="cart-title-count">0</span></h2></div><button class="icon-button" data-close aria-label="关闭购物车"><svg class="icon"><use href="#i-close"/></svg></button></div><div id="cart-items" class="cart-items"></div><div id="cart-footer" class="cart-footer"></div></dialog>
   <dialog id="checkout-dialog" class="checkout-dialog" aria-labelledby="checkout-title"><button class="icon-button dialog-close" data-close aria-label="关闭订单摘要"><svg class="icon"><use href="#i-close"/></svg></button><div id="checkout-content"></div></dialog>
