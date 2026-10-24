@@ -1,4 +1,5 @@
 import { products, selectProducts, ShopCart } from './store.mjs';
+import { ACCOUNT_KEY, browserAccounts, addressFields, validateAddress } from './account-store.mjs';
 
 const $ = selector => document.querySelector(selector);
 const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
@@ -7,6 +8,10 @@ const price = (cents, original) => `<span class="price"><small>¥</small>${money
 let storage;
 try { storage = window.localStorage; } catch { /* Restricted browsers use memory only. */ }
 const cart = new ShopCart(storage);
+const accounts = browserAccounts();
+let checkoutDraft = null;
+let checkoutOwnerId = null;
+let renderedAccountId;
 const filters = { category: 'all', query: '', sort: 'featured' };
 const detailDialog = $('#detail-dialog');
 const cartDialog = $('#cart-dialog');
@@ -15,6 +20,28 @@ let detailProduct;
 let detailQuantity = 1;
 let toastTimeout;
 let modalOpener;
+
+function renderAccount() {
+  const user = accounts.currentUser;
+  const id = user?.id ?? null;
+  if (id !== renderedAccountId) checkoutDraft = null;
+  renderedAccountId = id;
+  $('#account-link').textContent = user?.email || '登录 / 注册';
+  $('#account-link').title = user?.email || '登录或注册演示账号';
+  $('#logout-button').hidden = !user;
+  return user;
+}
+$('#logout-button').addEventListener('click', () => {
+  try { accounts.logout(); renderAccount(); checkoutDraft = null; toast('已退出登录，仍可作为游客下单'); }
+  catch (error) { toast(error.message); }
+});
+function refreshAccount() {
+  const previousOwner = checkoutOwnerId;
+  const user = renderAccount();
+  if (checkoutDialog.open && $('#checkout-form') && previousOwner !== (user?.id ?? null)) showCheckout();
+}
+window.addEventListener('pageshow', refreshAccount);
+window.addEventListener('storage', event => { if (event.key === ACCOUNT_KEY || event.key === null) refreshAccount(); });
 
 // Native dialogs provide focus trapping, inert background content and Escape handling.
 function openDialog(dialog, opener = document.activeElement) {
@@ -182,22 +209,76 @@ cartDialog.addEventListener('click', event => {
 });
 
 function showCheckout() {
-  $('#checkout-content').innerHTML = `<span class="eyebrow">READY FOR A LITTLE HAPPINESS?</span><h2 id="checkout-title">确认这份小幸福</h2><p class="checkout-intro">看看给毛孩子挑选的美味清单。</p><p class="demo-alert">这是模拟订单，不会付款、发货或产生真实交易。</p><div class="order-lines">${cart.items.map(({ product: p, quantity }) => `<div class="order-line"><span>${p.name}<small>${p.weight} × ${quantity}</small></span><span>¥${money(p.price * quantity)}</span></div>`).join('')}</div><div class="cart-subtotal"><span>合计 ${cart.count} 件</span>${price(cart.total)}</div><div class="checkout-actions"><button class="button secondary" id="back-to-cart">返回购物袋</button><button class="button primary" id="confirm-order">确认模拟下单${icon('check')}</button></div>`;
+  const user = renderAccount();
+  checkoutOwnerId = user?.id ?? null;
+  const draft = checkoutDraft || user?.address || {};
+  $('#checkout-content').innerHTML = `<span class="eyebrow">READY FOR A LITTLE HAPPINESS?</span><h2 id="checkout-title">确认这份小幸福</h2><p class="checkout-intro">选好了小美味，再告诉我们把幸福送到哪里。</p><p class="demo-alert">这是模拟订单，不会付款、发货或产生真实交易。</p><div class="order-lines">${cart.items.map(({ product: p, quantity }) => `<div class="order-line"><span>${p.name}<small>${p.weight} × ${quantity}</small></span><span>¥${money(p.price * quantity)}</span></div>`).join('')}</div><form id="checkout-form" novalidate><fieldset class="shipping-fieldset"><legend>收货信息</legend><p id="checkout-account-note" class="checkout-account-note"></p><div class="address-grid">${addressFields.map(field => `<div class="form-field field-${field.name}"><label for="shipping-${field.name}">${field.label}</label>${field.name === 'detail' ? `<textarea id="shipping-${field.name}" name="${field.name}" rows="2"` : `<input id="shipping-${field.name}" name="${field.name}" type="${field.type || 'text'}"`} autocomplete="${field.autocomplete}" minlength="${field.min}" maxlength="${field.max}" placeholder="${field.placeholder}" required aria-describedby="shipping-${field.name}-error" ${field.type === 'tel' ? 'inputmode="numeric" pattern="1[3-9][0-9]{9}"' : ''}>${field.name === 'detail' ? '</textarea>' : ''}<p id="shipping-${field.name}-error" class="field-error" hidden></p></div>`).join('')}</div></fieldset><p id="checkout-error" class="form-error" role="alert" hidden></p><div class="cart-subtotal checkout-total"><span>合计 ${cart.count} 件</span>${price(cart.total)}</div><div class="checkout-actions"><button class="button secondary" id="back-to-cart" type="button">返回购物袋</button><button class="button primary" id="confirm-order" type="submit">确认模拟下单${icon('check')}</button></div></form>`;
+  $('#checkout-account-note').textContent = user ? `已登录 ${user.email} · 下单成功后保存此地址，下次可直接使用。` : accounts.lastError ? '当前无法读取演示账号，可继续游客下单；地址仅用于本次模拟订单。' : '游客也能下单 · 地址仅用于本次模拟订单，不长期保存。';
+  for (const field of addressFields) $(`#shipping-${field.name}`).value = draft[field.name] || '';
   openDialog(checkoutDialog);
 }
+
+function captureCheckoutDraft() {
+  const form = $('#checkout-form');
+  if (form) checkoutDraft = Object.fromEntries(new FormData(form));
+}
+checkoutDialog.addEventListener('input', captureCheckoutDraft);
 checkoutDialog.addEventListener('click', event => {
-  if (event.target.closest('#back-to-cart')) { renderCart(); openDialog(cartDialog); }
-  if (event.target.closest('#confirm-order') && cart.count) {
-    const count = cart.count;
-    const total = cart.total;
-    cart.clear();
-    updateCartBadge();
-    const orderId = `PAW-${Date.now().toString(36).toUpperCase()}`;
-    $('#checkout-content').innerHTML = `<div class="success-state"><span class="success-icon">${icon('check')}</span><span class="eyebrow">LOVE IS ON THE WAY</span><h2 id="checkout-title" tabindex="-1">快乐，已成功打包！</h2><p>${count} 件小美味 · 合计 ¥${money(total)}<br>谢谢你，认真宠爱每一个小日常。</p><div class="order-number">演示订单 ${orderId}</div><p>本次为模拟下单，未付款，也不会实际发货。</p><button class="button primary" id="finish-order">继续逛逛${icon('arrow')}</button></div>`;
-    $('#checkout-title').focus();
-  }
+  if (event.target.closest('#back-to-cart')) { captureCheckoutDraft(); renderCart(); openDialog(cartDialog); }
   if (event.target.closest('#finish-order')) closeDialog(checkoutDialog);
+});
+checkoutDialog.addEventListener('submit', event => {
+  if (event.target.id !== 'checkout-form') return;
+  event.preventDefault();
+  if (!cart.count) return;
+  const user = renderAccount();
+  if (checkoutOwnerId !== (user?.id ?? null)) {
+    showCheckout();
+    $('#checkout-error').textContent = '账号状态已变化，请重新确认收货信息。';
+    $('#checkout-error').hidden = false;
+    return;
+  }
+  captureCheckoutDraft();
+  const { value: address, errors } = validateAddress(checkoutDraft);
+  for (const field of addressFields) {
+    const error = errors[field.name];
+    const input = $(`#shipping-${field.name}`);
+    const hint = $(`#shipping-${field.name}-error`);
+    hint.hidden = !error;
+    hint.textContent = error || '';
+    if (error) input.setAttribute('aria-invalid', 'true');
+    else input.removeAttribute('aria-invalid');
+  }
+  $('#checkout-error').hidden = true;
+  if (Object.keys(errors).length) {
+    $('#checkout-error').textContent = '请检查标出的收货信息，填写完整后再下单。';
+    $('#checkout-error').hidden = false;
+    $(`#shipping-${Object.keys(errors)[0]}`).focus();
+    return;
+  }
+  if (user) {
+    try { accounts.saveAddress(address); }
+    catch (error) {
+      $('#checkout-error').textContent = error.message;
+      $('#checkout-error').hidden = false;
+      $('#checkout-error').scrollIntoView({ block: 'nearest' });
+      return;
+    }
+  }
+  const items = cart.items;
+  const count = cart.count;
+  const total = cart.total;
+  const orderId = `PAW-${Date.now().toString(36).toUpperCase()}`;
+  $('#checkout-content').innerHTML = `<div class="success-state"><span class="success-icon">${icon('check')}</span><span class="eyebrow">LOVE IS ON THE WAY</span><h2 id="checkout-title" tabindex="-1">快乐，已成功打包！</h2><p>${count} 件小美味 · 合计 ¥${money(total)}<br>谢谢你，认真宠爱每一个小日常。</p><div class="order-number">演示订单 ${orderId}</div><div class="success-address"><strong>收货信息</strong><p id="success-recipient"></p><p id="success-address"></p></div><div class="order-lines success-items">${items.map(({ product: p, quantity }) => `<div class="order-line"><span>${p.name}<small>${p.weight} × ${quantity}</small></span><span>¥${money(p.price * quantity)}</span></div>`).join('')}</div><p id="success-save-note"></p><p>本次为模拟下单，未付款，也不会实际发货。</p><button class="button primary" id="finish-order">继续逛逛${icon('arrow')}</button></div>`;
+  $('#success-recipient').textContent = `${address.recipient} · ${address.phone}`;
+  $('#success-address').textContent = `${address.province} ${address.city} ${address.district} ${address.detail}`;
+  $('#success-save-note').textContent = user ? '此地址已保存到当前演示账号，下次结算可直接使用。' : '游客收货地址未长期保存。';
+  cart.clear();
+  checkoutDraft = null;
+  updateCartBadge();
+  $('#checkout-title').focus();
 });
 
 renderProducts();
 updateCartBadge();
+renderAccount();

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fffaf2">
+  <meta name="description" content="登录爪爪零食铺，记住每一份用心挑选的宠爱。前端演示账号，仅在当前浏览器有效。">
+  <title>登录 / 注册 · 爪爪零食铺</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="account.mjs" type="module"></script>
+</head>
+<body class="account-page">
+  <header class="site-header"><div class="container header-inner"><a class="brand" href="index.html" aria-label="返回爪爪零食铺"><img class="account-brand-mark" src="assets/favicon.svg" alt="" width="43" height="43"><span>爪爪零食铺<small>PAW PAW PANTRY</small></span></a><a class="return-shop" href="index.html#shop">← 返回商城</a></div></header>
+  <main class="account-main container">
+    <section class="account-story" aria-labelledby="account-story-title">
+      <span class="eyebrow">A LITTLE LOVE, REMEMBERED.</span>
+      <h1 id="account-story-title">把每一份宠爱，<br>都好好记住。</h1>
+      <p>登录后，为毛孩子保存一份收货地址。<br>下次的小幸福，就能少一点等待。</p>
+      <div class="account-photo"><img src="assets/cat.jpg" alt="抬头期待小零食的橘猫" width="500" height="700"><span>每一次回来，<br>都有小美味在等你 ♡</span></div>
+    </section>
+    <section class="account-card" aria-labelledby="account-title">
+      <div id="current-session" class="current-session" hidden><div>当前已登录<strong id="session-email"></strong></div><button type="button" id="account-logout">退出登录</button></div>
+      <span class="eyebrow">WELCOME TO PAW PAW PANTRY</span>
+      <h2 id="account-title">欢迎回来，小爪的朋友</h2>
+      <p class="account-subtitle" id="account-subtitle">登录后，下次下单可以直接使用保存的地址。</p>
+      <div class="account-tabs" role="tablist" aria-label="账号操作"><button id="login-tab" role="tab" aria-selected="true" aria-controls="auth-panel" tabindex="0">登录</button><button id="register-tab" role="tab" aria-selected="false" aria-controls="auth-panel" tabindex="-1">注册</button></div>
+      <div id="auth-panel" role="tabpanel" aria-labelledby="login-tab">
+        <form id="account-form" class="account-form" novalidate>
+          <div class="form-field"><label for="email">邮箱</label><input id="email" name="email" type="email" autocomplete="username" inputmode="email" maxlength="254" placeholder="you@example.com" required aria-describedby="email-error"><p id="email-error" class="field-error" hidden></p></div>
+          <div class="form-field"><label for="password">密码 <span>8–64 位</span></label><input id="password" name="password" type="password" autocomplete="current-password" minlength="8" maxlength="64" placeholder="请输入演示密码" required aria-describedby="password-error"><p id="password-error" class="field-error" hidden></p></div>
+          <div class="form-field" id="confirmation-field" hidden><label for="confirmation">确认密码</label><input id="confirmation" name="confirmation" type="password" autocomplete="new-password" minlength="8" maxlength="64" placeholder="再次输入密码" disabled aria-describedby="confirmation-error"><p id="confirmation-error" class="field-error" hidden></p></div>
+          <p id="account-error" class="form-error" role="alert" hidden></p>
+          <button class="button primary account-submit" id="account-submit" type="submit">登录并返回商城 <span aria-hidden="true">→</span></button>
+        </form>
+      </div>
+      <div class="account-demo"><strong>前端演示账号</strong><p>账号和收货地址仅保存在当前浏览器，不会发送验证邮件，不用于真实身份认证或交易。</p></div>
+      <a class="guest-link" href="index.html#shop">先随便逛逛，游客也能模拟下单 →</a>
+    </section>
+  </main>
+  <footer class="account-footer">© 2026 爪爪零食铺 · 把爱，喂进每一口。</footer>
+  <noscript><p class="noscript">请启用 JavaScript 以使用演示注册和登录功能。你也可以返回商城。</p></noscript>
+</body>
+</html>

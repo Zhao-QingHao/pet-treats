@@ -12,7 +12,7 @@ const server = http.createServer(async (req, res) => {
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
     const relative = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
     // Expose only the site's public entrypoints and image assets.
-    if (!['index.html', 'styles.css', 'app.mjs', 'store.mjs'].includes(relative) && !/^assets\/[\w.-]+$/.test(relative)) {
+    if (!['index.html', 'account.html', 'styles.css', 'app.mjs', 'store.mjs', 'account.mjs', 'account-store.mjs'].includes(relative) && !/^assets\/[\w.-]+$/.test(relative)) {
       res.writeHead(404); res.end('Not found'); return;
     }
     const target = path.join(root, relative);
